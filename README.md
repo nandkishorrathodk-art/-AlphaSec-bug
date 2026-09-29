@@ -250,6 +250,56 @@ the dead ends — the attacker can be swapped for an LLM to run AI-to-AI search.
 | `JB_FINDINGS_DIR` | `findings` | where runs are saved |
 | `JB_HOST` / `JB_PORT` | `127.0.0.1` / `12000` | web bind address |
 
+## Local lab: test payloads without touching a third party
+
+The fastest safe way to work with this tool is against a target you own. `lab/` ships a
+deliberately vulnerable, in-process agent ("DVWA for prompt injection") plus a runner that
+**cannot** be pointed at a remote host: it has no URL, host or port parameter and only ever
+calls the in-process object.
+
+```bash
+PYTHONPATH=. python3 lab/run_lab.py
+```
+
+The lab emulates the three trust boundaries these payloads exercise — tool descriptions
+trusted as instructions (MCP03), retrieved documents trusted as instructions (indirect / RAG),
+and tool output flowing back without a data boundary — then runs the same payload pack in three
+modes so you can see each layer's contribution:
+
+| mode | what it is | expected |
+| --- | --- | --- |
+| `vulnerable` | naive agent that decodes obfuscation and obeys embedded directives | every case `acted=True` |
+| `guarded` | naive agent + `detect` input filter that blocks flagged text | every case `acted=False` |
+| `hardened` | agent that treats tool descriptions and retrieved text as data | every case `acted=False` |
+
+All data in the lab is fake and nothing is fetched. Swap in your own deployment/API key and the
+same payloads become a real, authorized test.
+
+## Defensive detectors (`jbchat.detect`)
+
+The blue-team half of the toolkit. `detect` scans untrusted **input** — user messages, tool
+descriptions, retrieved documents — and flags instruction-injection patterns before they reach
+a model. It is pure text processing; no model, no network.
+
+```python
+from jbchat import detect
+
+detect.scan_text("\u200b\u200c...")                 # zero-width / bidi / unicode-tag smuggling
+detect.scan_tool_descriptions(tools)               # MCP03 tool poisoning
+detect.scan_retrieved(chunk)                        # indirect / RAG injection
+detect.sanitize(text)                               # strip hidden chars, keep visible text
+print(detect.report(result))
+```
+
+It catches hidden-character smuggling (zero-width, bidi, Unicode tags), base64-encoded
+instructions, mixed-script homoglyph tokens, sensitive-file asks (`~/.ssh/id_rsa`,
+`~/.aws/credentials`), embedded directive tags (`<IMPORTANT>`), assistant-directed notes,
+concealment asks and payment-shaped actions. Wire `scan_tool_descriptions` into your MCP tool
+loader and `scan_retrieved` into your RAG ingestion as pre-filters.
+
+Note: `analyzer.py` scores *replies* for leak signals; `detect.py` inspects *inputs* for
+injection. They are complementary, and neither replaces the other.
+
 ## Tests
 
 ```bash

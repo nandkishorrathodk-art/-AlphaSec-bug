@@ -132,6 +132,19 @@ Package `jbchat/`:
 - `docs/ECOSYSTEM.md` — third-party tools, guardrails, benchmarks.
 - `docs/ADVANCED.md` — multi-turn, encoding, optimisation attacks + reference ASR.
 
+## Lab and detectors
+
+- `lab/vulnerable_agent.py` — owned, deliberately vulnerable in-process target. Two boundary
+  switches: `strict=True` treats tool descriptions and retrieved text as data. `_deobfuscate()`
+  reverses the zero-width bit encoding and base64 blobs so smuggling cases do something.
+- `lab/run_lab.py` — runs the payload pack in three modes (`vulnerable`, `guarded`, `hardened`).
+  No host/URL parameter, so it cannot reach a third party.
+- `jbchat/detect.py` — input-side detectors. `analyzer.py` scores *replies*; `detect.py` scans
+  *inputs* (user text, tool descriptions, retrieved docs) for injection patterns.
+- Lab runner judges behaviour, not the analyzer score. `analyzer.analyze()` returns 0.0 for
+  smuggled directives that the agent clearly obeyed — a real blind spot, asserted in
+  `test_run_lab_shows_analyzer_blind_spot`.
+
 ## Gotchas
 
 - Restart the web server after editing `jbchat/*` (no auto-reload in `python -m jbchat`).
