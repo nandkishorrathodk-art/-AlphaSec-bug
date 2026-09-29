@@ -109,15 +109,15 @@ class Candidate:
     signals: list[str] = field(default_factory=list)
 
     def evaluate(self) -> "Candidate":
-        verdict = analyze(self.reply)
+        verdict = analyze(self.reply, sent_prompt=self.prompt)
         self.score = verdict["score"]
         self.success = verdict["success"]
         self.signals = verdict["matched"]
         return self
 
 
-def _score(reply: str) -> tuple[float, bool, list[str]]:
-    v = analyze(reply)
+def _score(reply: str, prompt: str = "") -> tuple[float, bool, list[str]]:
+    v = analyze(reply, sent_prompt=prompt)
     return v["score"], v["success"], v["matched"]
 
 
@@ -223,7 +223,7 @@ async def run_tap(query: QueryFn, goal: str, initial_prompt: str = "",
         scored: list[Node] = []
         for node in frontier:
             node.reply = await query(node.prompt)
-            node.score, node.success, _ = _score(node.reply)
+            node.score, node.success, _ = _score(node.reply, node.prompt)
             best.append(Candidate(prompt=node.prompt, reply=node.reply).evaluate())
             if node.success:
                 best.sort(key=lambda c: c.score, reverse=True)

@@ -166,6 +166,52 @@ def sanitize(text: str) -> str:
     return visible
 
 
+_ZERO_WIDTH_BITS = {"\u200b": "0", "\u200c": "1"}
+
+
+def _recover_zero_width(window: str) -> str:
+    bits = "".join(_ZERO_WIDTH_BITS[ch] for ch in window if ch in _ZERO_WIDTH_BITS)
+    out = bytearray()
+    for i in range(0, len(bits) - 7, 8):
+        out.append(int(bits[i:i + 8], 2))
+    try:
+        return out.decode("utf-8")
+    except UnicodeDecodeError:
+        return ""
+
+
+def deobfuscate(text: str) -> str:
+    """Best-effort reversal of the obfuscation *this toolkit* generates.
+
+    Recovers text hidden with the zero-width bit channel and decodes base64 blobs so
+    the result can be compared or scanned as plaintext. Not a general de-obfuscator.
+    """
+    import base64 as _b64
+    recovered: list[str] = []
+    window: list[str] = []
+    for ch in text:
+        if ch in _ZERO_WIDTH_BITS or ch in _ZERO_WIDTH:
+            window.append(ch)
+            continue
+        if window:
+            recovered.append(_recover_zero_width("".join(window)))
+            window = []
+        recovered.append(ch)
+    if window:
+        recovered.append(_recover_zero_width("".join(window)))
+    visible = "".join(recovered)
+
+    def _try(match: re.Match) -> str:
+        token = match.group(0)
+        try:
+            decoded = _b64.b64decode(token + "=" * (-len(token) % 4)).decode("utf-8")
+            return decoded if decoded.isprintable() else token
+        except Exception:
+            return token
+
+    return _B64_TOKEN.sub(_try, visible)
+
+
 def report(result: ScanResult) -> str:
     if result.clean:
         return "clean: no injection patterns detected"

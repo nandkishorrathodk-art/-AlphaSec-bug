@@ -272,8 +272,8 @@ def default_attacker(goal: str, best_so_far: list[str], failures: list[str],
 
 
 async def default_judge(goal: str, payload: str, response: str) -> float:
-    """Heuristic judge: the analyzer's score."""
-    return analyze(response)["score"]
+    """Heuristic judge: the analyzer's score, with directive-echo detection."""
+    return analyze(response, sent_prompt=payload)["score"]
 
 
 def _sync_attacker(fn) -> AttackerFn:
@@ -351,7 +351,7 @@ class EvolutionEngine:
                 g = Genome(prompt=cand, pipeline=pipeline, score=round(score, 3),
                            success=score >= self.success_threshold, reply=reply,
                            generation=gen)
-                g.signals = analyze(reply)["matched"]
+                g.signals = analyze(reply, sent_prompt=cand)["matched"]
                 scored.append(g)
                 reward = max(0.0, g.score - self._baseline)
                 for op in pipeline:

@@ -180,8 +180,8 @@ class ChatBot:
         lines += [f"- `{sid}` — {desc}" for sid, desc in STRATEGIES]
         return "\n".join(lines)
 
-    def triage(self, response_text: str) -> dict:
-        return analyze(response_text)
+    def triage(self, response_text: str, sent_prompt: str = "") -> dict:
+        return analyze(response_text, sent_prompt=sent_prompt)
 
     def make_finding(self, result: AttackResult) -> Finding:
         f = Finding.from_result(result, target=self.settings.target)

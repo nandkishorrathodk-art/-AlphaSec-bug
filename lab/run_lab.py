@@ -54,7 +54,7 @@ def run() -> list[dict]:
                 if not scan.clean:
                     user_msg = "[blocked by input filter]"
             reply = agent.respond(user_msg)
-            verdict = analyzer.analyze(reply.text)
+            verdict = analyzer.analyze(reply.text, sent_prompt=user_msg)
             results.append({
                 "mode": mode,
                 "case": name,

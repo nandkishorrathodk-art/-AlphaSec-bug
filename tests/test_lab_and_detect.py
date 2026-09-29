@@ -148,8 +148,11 @@ def test_run_lab_vulnerable_acts_and_defences_block():
     assert guarded and not any(r["acted"] for r in guarded)
 
 
-def test_run_lab_shows_analyzer_blind_spot():
-    """Documents a real gap: the reply analyzer scores 0 on smuggling that clearly worked."""
+def test_run_lab_analyzer_now_flags_smuggling():
+    """The reply analyzer used to score 0 on smuggling that clearly worked.
+
+    With directive-echo detection it now agrees with the behavioural ground truth.
+    """
     rows = [r for r in run_lab.run() if r["mode"] == "vulnerable" and r["case"] == "zero-width"]
     assert rows and rows[0]["acted"] is True
-    assert rows[0]["analyzer_success"] is False
+    assert rows[0]["analyzer_success"] is True

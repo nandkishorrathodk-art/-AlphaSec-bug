@@ -305,7 +305,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     for r in results:
-        verdict = analyze(r.response_text)
+        verdict = analyze(r.response_text, sent_prompt=r.payload)
         print("=" * 72)
         print(f"{r.technique_id} — {r.technique_name} [{r.category}]")
         print(f"  status={r.status}  heuristic_score={verdict['score']}  latency={r.latency_ms:.0f}ms")

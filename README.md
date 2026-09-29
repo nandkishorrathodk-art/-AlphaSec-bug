@@ -298,7 +298,9 @@ concealment asks and payment-shaped actions. Wire `scan_tool_descriptions` into 
 loader and `scan_retrieved` into your RAG ingestion as pre-filters.
 
 Note: `analyzer.py` scores *replies* for leak signals; `detect.py` inspects *inputs* for
-injection. They are complementary, and neither replaces the other.
+injection. They are complementary, and neither replaces the other. Pass the prompt you sent to
+`analyze(reply, sent_prompt=...)` to also catch a reply that simply restates a smuggled
+directive — the case where a fixed-token scorer sees nothing but the model plainly complied.
 
 ## Tests
 

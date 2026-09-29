@@ -253,7 +253,7 @@ def diagnose(reply: str, sent_prompt: str = "", history: list[str] | None = None
     if the refusal stays on the same topic. Without it, a differently-worded refusal to a
     different question can be mistaken for a model-level refusal of the goal.
     """
-    verdict = analyze(reply)
+    verdict = analyze(reply, sent_prompt=sent_prompt)
     score = verdict["score"]
     matched = verdict["matched"]
     text = reply or ""

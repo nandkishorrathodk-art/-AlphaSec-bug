@@ -91,7 +91,7 @@ async def _command(ws: WebSocket, text: str) -> None:
         await ws.send_json({"type": "assistant", "content": f"Launching chain against `{_bot.settings.target or 'manual'}`..."})
         results = await _bot.attack(chain, goal)
         for res in results:
-            verdict = analyze(res.response_text)
+            verdict = analyze(res.response_text, sent_prompt=res.payload)
             block = (
                 f"### {res.technique_id} — {res.technique_name}\n"
                 f"- status: `{res.status}`, heuristic score **{verdict['score']}**\n"
@@ -296,7 +296,7 @@ async def _command(ws: WebSocket, text: str) -> None:
                     await ws.send_json({"type": "assistant", "content": f"Unknown planner `{pid}`. See /plans."})
                 else:
                     for r in results:
-                        verdict = analyze(r.response_text)
+                        verdict = analyze(r.response_text, sent_prompt=r.payload)
                         await ws.send_json({"type": "result",
                                             "content": f"{r.technique_id} — score={verdict['score']}\n"
                                                        f"{verdict['evidence'][:600]}",

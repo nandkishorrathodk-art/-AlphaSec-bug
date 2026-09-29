@@ -141,9 +141,15 @@ Package `jbchat/`:
   No host/URL parameter, so it cannot reach a third party.
 - `jbchat/detect.py` — input-side detectors. `analyzer.py` scores *replies*; `detect.py` scans
   *inputs* (user text, tool descriptions, retrieved docs) for injection patterns.
-- Lab runner judges behaviour, not the analyzer score. `analyzer.analyze()` returns 0.0 for
-  smuggled directives that the agent clearly obeyed — a real blind spot, asserted in
-  `test_run_lab_shows_analyzer_blind_spot`.
+- `analyzer.analyze(reply, sent_prompt=...)` — pass the prompt you sent to enable directive-echo
+  detection: a reply that merely restates a smuggled instruction now scores as success even with
+  no fixed leak token. Callers that have the prompt wire it (`adaptive.Candidate.evaluate`,
+  `autonomous.default_judge`, `copilot.diagnose`, `cli`/`web` via `AttackResult.payload`).
+- A few analyzer signals ("I will now proceed…", "command was queued", tool-call shapes) are
+  *corroborating*: they stack toward a suspicious score but cannot alone mark success, or a
+  benign "I will now summarise…" would read as an injection win. See `_CORROBORATING`.
+- `detect.deobfuscate()` reverses the toolkit's own zero-width/base64 output; the analyzer uses
+  it so obfuscated prompts still match the echo test.
 
 ## Gotchas
 
